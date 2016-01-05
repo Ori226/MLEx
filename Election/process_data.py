@@ -2,48 +2,68 @@ import pandas as pd
 import numpy as np
 
 
-
-if __name__ == "__main__":
-
-    df = pd.read_csv(r'C:\Users\ORI\Documents\IDC-non-sync\ML_Course\Election\Data\ElectionsData.csv')
-
-    # import matplotlib
-    # import matplotlib.pyplot as plt
-    for col in df.columns:
-        if df[col].dtype == "object":
-            df[col]= df[col].astype("category")
-
-    # df["Vote"] = df["Vote"].astype("category")
-    print df.Vote.cat.categories
-    df_processed = df.copy() #    df.Vote.cat.categories
-    df_processed["Vote"][0] = pd.Categorical(["Greens"], categories=df_processed["Vote"].cat.categories)
-    print df_processed["Vote"][0]
-    print df["Vote"][0]
-    print df_processed['Occupation_Satisfaction'][33:35]
-    df_processed['Occupation_Satisfaction'] = df_processed['Occupation_Satisfaction'].fillna(0)
-
-    print df_processed['Occupation_Satisfaction'][33:35]
-    print "mode is {0}".format(df["Vote"].mode())
-    print pd.isnull(df_processed['Occupation_Satisfaction'])
-    # inds = pd.isnull(df['Occupation_Satisfaction']).any(1).nonzero()[0]
-    inds =  pd.isnull(df['Occupation_Satisfaction'][33:35]).select(lambda x: x  , axis=0)
-    print "inds: {0}".format(inds)
-
-    print "inds2: {0}".format(df['Will_vote_only_large_party'].index[pd.isnull(df['Will_vote_only_large_party']) ])
-    #df_processed['Will_vote_only_large_party'] = \
-    df_processed['Will_vote_only_large_party'] = df_processed['Will_vote_only_large_party'].fillna(df["Will_vote_only_large_party"].mode()[0])
-    print "inds2: {0}".format(df_processed['Will_vote_only_large_party'].index[pd.isnull(df_processed['Will_vote_only_large_party']) ])
+def convert_categorical(data, feature):
+    print feature
+    data[feature] = original_data[feature].astype("category")
+#     print pd.get_dummies(data[feature]).as_matrix().shape
+    data[feature+"Int"] = data[feature].cat.rename_categories(range(data[feature].nunique())).astype(int)
+    data.loc[data[feature].isnull(), feature+"Int"] = np.nan #fix NaN conversion
 
 
-    # print pd.isnull(df['Vote'])[:]
+def fill_null_by_mode(data, feature):
+    data.loc[data[feature].isnull(), feature] = data[feature].dropna().mode().iloc[0]
 
-    # print "inds: {0}".format(range(len(inds)))
+def fill_null_by_media(data, feature):
+    median = data[feature].dropna().median()
+    data.loc[data[feature].isnull(), feature] = median
 
+def fill_outliers_with_nan(data, feature):
+    data.loc[((data[feature] - data[feature].mean()) / data[feature].std()).abs() >= 2.5, feature] = np.nan
 
-    # fill up missing data
-    # for each categorical, find the mode
-    # for others find the average
 
 
 
 
+if __name__ == "__main__":
+    working_dir = r"C:\Users\ORI\Documents\IDC-non-sync\ML_Course\Election\Data\\"
+    original_data = pd.read_csv(working_dir +  r'ElectionsData.csv')
+
+    ObjFeat=original_data.keys()[original_data.dtypes.map(lambda x: x=='object')]
+    ObjNonCategorical=original_data.keys()[original_data.dtypes.map(lambda x: x <>'object')]
+    # print "non categorical = " + ObjNonCategorical
+    for f in ObjFeat:
+        convert_categorical(original_data, f)
+
+    # now, fill the null values. start with categorical:
+
+
+
+
+
+
+    for f in ['AVG_lottary_expanses', 'Avg_monthly_expense_when_under_age_21', 'Avg_Residancy_Altitude']:
+        original_data.loc[original_data[f] < 0, f] = np.nan
+
+
+
+
+
+    for f in ObjFeat:
+        fill_null_by_mode(original_data, f+"Int")
+
+    from sklearn import preprocessing
+
+
+    for f in ObjNonCategorical:
+        fill_null_by_media(original_data, f)
+
+    #     X_scaled = preprocessing.scale(original_data[f].as_matrix())
+    #     original_data[f] = X_scaled
+
+
+
+    # and remove the old categories
+    for f in ObjFeat:
+        original_data.drop(f, axis=1, inplace=True)
+
+    original_data.info()
