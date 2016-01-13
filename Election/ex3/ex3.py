@@ -1,14 +1,16 @@
 # coding=utf-8
 
-import numpy as np
 import csv
+import os
+
+import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.metrics import confusion_matrix
-from data_preparation import prepare_the_data
 import matplotlib.pyplot as plt
-import os
+
+from data_preparation import prepare_the_data
 
 __author__ = 'ORI'
 
@@ -101,7 +103,7 @@ if __name__ == "__main__":
     working_direcotry = r"C:\Users\ORI\Documents\IDC-non-sync\ML_Course\Election\Data\\"
     file_name = os.path.join(working_direcotry, r'ElectionsData.csv')
 
-    train, validation, test, feature_categorical_dictionary, train_idx, test_idx = prepare_the_data(file_name,
+    train, validation, test, feature_categorical_dictionary, train_idx, test_idx, _ = prepare_the_data(file_name,
                                                                                                     working_direcotry)
     vote_int_to_name = feature_categorical_dictionary['Vote']
 

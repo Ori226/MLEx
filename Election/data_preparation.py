@@ -52,6 +52,8 @@ def prepare_the_data(data_file_name, output_directory):
     # extarct 'vote' names
     categorical_dict = dict()
 
+    number_to_party_dictionary=dict([(i, party) for i, party in enumerate(original_data['Vote'].astype("category").cat.categories)])
+
     for f in ObjFeat:
         feature_categorical_dictionary = convert_categorical(original_data, f)
         categorical_dict[f] = feature_categorical_dictionary
@@ -67,8 +69,6 @@ def prepare_the_data(data_file_name, output_directory):
 
 
 
-    # split to train \ test\valid
-    # Split the data to – train (50-75%), test (25-15%), validation (25-10%)
 
     res = StratifiedKFold(original_data['VoteInt'], 4)
     train_indexes = list()
@@ -76,26 +76,27 @@ def prepare_the_data(data_file_name, output_directory):
     validation_indexes = list(res)[2][1]
     test_indexes = list(res)[3][1]
 
-    # splits = list(StratifiedShuffleSplit(original_data['VoteInt'], 2, test_size=0.50, random_state=0))
 
     train = original_data.iloc[train_indexes, :]
+
+
+
+
     validation = original_data.iloc[validation_indexes, :]
     test = original_data.iloc[test_indexes, :]
-    # non_train = original_data.iloc[splits[1][0], :]
-    # test_splits = list(StratifiedShuffleSplit(non_train['VoteInt'], 2, test_size=0.50, random_state=0))
+
     train.to_csv(os.path.join(output_directory, r"ElectionsData_train.csv"), index=False)
     validation.to_csv(os.path.join(output_directory, r"ElectionsData_validation.csv"), index=False)
     test.to_csv(os.path.join(output_directory, r"ElectionsData_test.csv"), index=False)
-    # valid.to_csv(working_dir + r"output\ElectionsData_valid.csv", index=False)
+
 
     X_train, X_valid, X_test = [data_set.drop('VoteInt', 1).as_matrix() for data_set in [train, validation, test]]
     y_train, y_valid, y_test = [data_set['VoteInt'].as_matrix() for data_set in [train, validation, test]]
-    # print X_train.shape
-    # y_train = train['VoteInt'].as_matrix()
+
     train_data = DataForClassification(data=X_train, labels=y_train)
     validation_data = DataForClassification(data=X_valid, labels=y_valid)
     test_data = DataForClassification(data=X_test, labels=y_test)
-    return train_data, validation_data, test_data, categorical_dict, train_indexes, test_indexes
+    return train_data, validation_data, test_data, categorical_dict, train_indexes, test_indexes, number_to_party_dictionary
 
 
 if __name__ == "__main__":
